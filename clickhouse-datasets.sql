@@ -2,7 +2,6 @@
 -- Author: SyneHQ (harsh@synehq.com)
 -- Description: Creates databases and tables for E-commerce, Finance, Healthcare, Manufacturing, and Digital Product datasets
 -- Date: 2025-08-21
-
 -- ================================================================================
 -- DATABASE CREATION
 -- ================================================================================
@@ -37,7 +36,7 @@ CREATE TABLE IF NOT EXISTS ecommerce_retail.online_retail_transactions (
     Quarter UInt8 MATERIALIZED toQuarter(InvoiceDate)
 ) ENGINE = MergeTree()
 PARTITION BY (Year, Month)
-ORDER BY (InvoiceDate, CustomerID, StockCode)
+ORDER BY (InvoiceDate, StockCode) -- Removed nullable CustomerID from sorting key
 SETTINGS index_granularity = 8192;
 
 -- Customer dimension table
@@ -234,7 +233,7 @@ SETTINGS index_granularity = 8192;
 -- DIGITAL PRODUCT DOMAIN
 -- ================================================================================
 
--- Clickstream events table
+-- Clickstream events table - Fixed toDay function error
 CREATE TABLE IF NOT EXISTS digital_product.clickstream_events (
     EventID String,
     UserID String,
@@ -264,7 +263,7 @@ CREATE TABLE IF NOT EXISTS digital_product.clickstream_events (
     IsWeekend UInt8 MATERIALIZED if(toDayOfWeek(Timestamp) IN (6,7), 1, 0),
     TimeBucket DateTime MATERIALIZED toStartOfInterval(Timestamp, INTERVAL 5 MINUTE)
 ) ENGINE = MergeTree()
-PARTITION BY (Year, Month, Day)
+PARTITION BY (Year, Month, toDayOfMonth(Date)) -- Fixed: replaced toDay with toDayOfMonth
 ORDER BY (Timestamp, UserID, SessionID)
 SETTINGS index_granularity = 8192;
 
